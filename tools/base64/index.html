@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Base64 编解码</title>
+    <link rel="stylesheet" href="../../styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <div class="tool-shell">
+        <a class="back-link" href="../../">← 返回首页</a>
+        <h1>Base64 编解码</h1>
+        <p>输入文本进行编码，或输入 Base64 进行解码。</p>
+
+        <textarea id="textInput" placeholder="输入文本或 Base64"></textarea>
+
+        <div class="toolbar">
+          <button id="encodeBtn">编码</button>
+          <button id="decodeBtn">解码</button>
+          <button id="clearBtn">清空</button>
+        </div>
+
+        <div id="result" class="result"></div>
+      </div>
+    </main>
+
+    <script>
+      const input = document.getElementById('textInput');
+      const result = document.getElementById('result');
+
+      document.getElementById('encodeBtn').addEventListener('click', () => {
+        result.textContent = btoa(unescape(encodeURIComponent(input.value)));
+      });
+
+      document.getElementById('decodeBtn').addEventListener('click', () => {
+        try {
+          const decoded = decodeURIComponent(escape(atob(input.value)));
+          result.textContent = decoded;
+        } catch (error) {
+          result.textContent = 'Base64 解码失败：' + error.message;
+        }
+      });
+
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        input.value = '';
+        result.textContent = '';
+      });
+    </script>
+  </body>
+</html>
