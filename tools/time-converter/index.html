@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>时间工具</title>
+    <link rel="stylesheet" href="../../styles.css" />
+    <style>
+      .grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: 1fr;
+      }
+
+      .result-card {
+        padding: 1rem;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid var(--border);
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 0.95rem;
+      }
+
+      input {
+        width: 100%;
+        padding: 0.8rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface-2);
+        color: var(--text);
+      }
+
+      input.placeholder-mode {
+        color: #94a3b8;
+      }
+
+      .zone-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.75rem;
+        margin-top: 1rem;
+      }
+
+      .zone-item {
+        padding: 0.9rem 1rem;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid var(--border);
+        transition: all 0.2s ease;
+      }
+
+      .zone-item strong {
+        display: block;
+        margin-bottom: 0.25rem;
+      }
+
+      .zone-item.highlight {
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.22), rgba(129, 140, 248, 0.2));
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+      }
+
+      .zone-item.dim {
+        opacity: 0.55;
+        background: rgba(255, 255, 255, 0.02);
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .radio-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+      }
+
+      .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.7rem 0.9rem;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        background: rgba(255,255,255,0.04);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .radio-option:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .radio-option input {
+        width: auto;
+        margin: 0;
+        accent-color: var(--accent);
+      }
+
+      .radio-option.selected {
+        background: linear-gradient(90deg, rgba(56, 189, 248, 0.25), rgba(129, 140, 248, 0.22));
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container">
+      <div class="tool-shell">
+        <a class="back-link" href="../../">← 返回首页</a>
+        <h1>时间工具</h1>
+        <p>输入一个时间，兼容常见格式，并可切换到不同时区查看对应时间。</p>
+
+        <div class="grid">
+          <div>
+            <label class="muted" for="timeInput">原时间</label>
+            <input id="timeInput" type="text" />
+          </div>
+          <div>
+            <label class="muted">原时区</label>
+            <div class="radio-group" id="zoneRadios">
+              <label class="radio-option selected">
+                <input type="radio" name="sourceZone" value="Asia/Shanghai" checked />
+                CN
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="sourceZone" value="UTC" />
+                UTC
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="sourceZone" value="Asia/Kolkata" />
+                IST
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <button id="clearBtn">清空</button>
+        </div>
+
+        <div class="result-card">
+          <div id="result" class="result">等待转换...</div>
+          <div id="zoneResults" class="zone-list"></div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const input = document.getElementById('timeInput');
+      const result = document.getElementById('result');
+      const zoneResults = document.getElementById('zoneResults');
+      const sourceZoneInputs = document.querySelectorAll('input[name="sourceZone"]');
+      const DEFAULT_PLACEHOLDER = '请输入时间';
+
+      function getCurrentTimeForZone(timeZone) {
+        const now = new Date();
+        return now.toLocaleString('zh-CN', {
+          timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+      }
+
+      function setDefaultValue() {
+        if (input.value.trim()) {
+          return;
+        }
+        input.value = getCurrentTimeForZone('Asia/Shanghai');
+        input.classList.add('placeholder-mode');
+      }
+
+      function getZoneOffsetMinutes(timeZone) {
+        const zoneOffsetMap = {
+          'Asia/Shanghai': 8 * 60,
+          UTC: 0,
+          'Asia/Kolkata': 5.5 * 60
+        };
+        return zoneOffsetMap[timeZone] ?? 0;
+      }
+
+      function parseTime(value, sourceZone) {
+        if (!value || !value.trim()) {
+          throw new Error('请输入原时间');
+        }
+
+        const text = value.trim();
+        const normalized = text.replace(/\s+/g, ' ');
+        const directMatch = normalized.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T](\d{1,2})(?::(\d{1,2})(?::(\d{1,2}))?)?)?$/);
+
+        if (directMatch) {
+          const [, year, month, day, hour = '0', minute = '0', second = '0'] = directMatch;
+          const utcDate = new Date(Date.UTC(
+            Number(year),
+            Number(month) - 1,
+            Number(day),
+            Number(hour),
+            Number(minute),
+            Number(second)
+          ));
+          return new Date(utcDate.getTime() - (getZoneOffsetMinutes(sourceZone) * 60 * 1000));
+        }
+
+        const parsed = Date.parse(normalized);
+        if (!Number.isNaN(parsed)) {
+          return new Date(parsed);
+        }
+
+        throw new Error('暂时无法识别该时间格式');
+      }
+
+      function formatInZone(date, timeZone) {
+        const formatter = new Intl.DateTimeFormat('zh-CN', {
+          timeZone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false
+        });
+
+        return formatter.format(date);
+      }
+
+      function getSelectedSourceZone() {
+        return document.querySelector('input[name="sourceZone"]:checked').value;
+      }
+
+      function updateRadioSelection() {
+        sourceZoneInputs.forEach((radio) => {
+          const label = radio.closest('.radio-option');
+          label.classList.toggle('selected', radio.checked);
+        });
+      }
+
+      function renderZones(date) {
+        const sourceZone = getSelectedSourceZone();
+        const zones = [
+          { label: 'CN', value: 'Asia/Shanghai' },
+          { label: 'UTC', value: 'UTC' },
+          { label: 'IST', value: 'Asia/Kolkata' }
+        ];
+
+        zoneResults.innerHTML = zones.map((zone) => {
+          const isCurrent = zone.value === sourceZone;
+          const className = isCurrent ? 'zone-item dim' : 'zone-item highlight';
+          return `
+            <div class="${className}">
+              <strong>${zone.label}</strong>
+              ${formatInZone(date, zone.value)}
+            </div>
+          `;
+        }).join('');
+
+        result.innerHTML = `<strong>目标时间</strong>`;
+      }
+
+      function convertTime() {
+        try {
+          const sourceZone = getSelectedSourceZone();
+          const date = parseTime(input.value, sourceZone);
+          renderZones(date);
+        } catch (error) {
+          result.textContent = '错误：' + error.message;
+          zoneResults.innerHTML = '';
+        }
+      }
+
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        input.value = '';
+        input.classList.remove('placeholder-mode');
+        result.textContent = '等待转换...';
+        zoneResults.innerHTML = '';
+      });
+
+      input.addEventListener('focus', () => {
+        if (input.value.trim() === '') {
+          input.classList.add('placeholder-mode');
+          input.value = '';
+        } else {
+          input.classList.remove('placeholder-mode');
+          input.select();
+        }
+      });
+
+      input.addEventListener('blur', () => {
+        const trimmed = input.value.trim();
+        if (!trimmed) {
+          setDefaultValue();
+          convertTime();
+        } else {
+          input.classList.remove('placeholder-mode');
+        }
+      });
+
+      input.addEventListener('input', () => {
+        input.classList.remove('placeholder-mode');
+        convertTime();
+      });
+
+      input.addEventListener('paste', () => {
+        input.classList.remove('placeholder-mode');
+      });
+      sourceZoneInputs.forEach((radio) => {
+        radio.addEventListener('change', () => {
+          updateRadioSelection();
+          setDefaultValue();
+          convertTime();
+        });
+      });
+      updateRadioSelection();
+      setDefaultValue();
+      convertTime();
+    </script>
+  </body>
+</html>
