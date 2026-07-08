@@ -69,6 +69,35 @@
         border-color: rgba(255, 255, 255, 0.08);
       }
 
+      .zone-item.copyable {
+        cursor: pointer;
+      }
+
+      .zone-item.copyable:hover {
+        transform: translateY(-1px);
+      }
+
+      .copy-tip {
+        position: fixed;
+        left: 50%;
+        bottom: 1.5rem;
+        transform: translateX(-50%);
+        padding: 0.7rem 1rem;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.95);
+        color: white;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        font-size: 0.95rem;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .copy-tip.show {
+        opacity: 1;
+      }
+
       .radio-group {
         display: flex;
         flex-wrap: wrap;
@@ -111,7 +140,7 @@
       <div class="tool-shell">
         <a class="back-link" href="../../">← 返回首页</a>
         <h1>时间工具</h1>
-        <p>输入一个时间，兼容常见格式，并可切换到不同时区查看对应时间。</p>
+        <p>输入一个时间/时区，查看不同时区对应的时间。</p>
 
         <div class="grid">
           <div>
@@ -146,12 +175,14 @@
           <div id="zoneResults" class="zone-list"></div>
         </div>
       </div>
+      <div id="copyTip" class="copy-tip">已复制</div>
     </main>
 
     <script>
       const input = document.getElementById('timeInput');
       const result = document.getElementById('result');
       const zoneResults = document.getElementById('zoneResults');
+      const copyTip = document.getElementById('copyTip');
       const sourceZoneInputs = document.querySelectorAll('input[name="sourceZone"]');
       const DEFAULT_PLACEHOLDER = '请输入时间';
 
@@ -237,6 +268,23 @@
         });
       }
 
+      function showCopyTip() {
+        copyTip.classList.add('show');
+        window.clearTimeout(showCopyTip.timeoutId);
+        showCopyTip.timeoutId = window.setTimeout(() => {
+          copyTip.classList.remove('show');
+        }, 1200);
+      }
+
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showCopyTip();
+        } catch (error) {
+          console.error('复制失败', error);
+        }
+      }
+
       function renderZones(date) {
         const sourceZone = getSelectedSourceZone();
         const zones = [
@@ -247,9 +295,9 @@
 
         zoneResults.innerHTML = zones.map((zone) => {
           const isCurrent = zone.value === sourceZone;
-          const className = isCurrent ? 'zone-item dim' : 'zone-item highlight';
+          const className = isCurrent ? 'zone-item dim copyable' : 'zone-item highlight copyable';
           return `
-            <div class="${className}">
+            <div class="${className}" data-text="${formatInZone(date, zone.value)}">
               <strong>${zone.label}</strong>
               ${formatInZone(date, zone.value)}
             </div>
@@ -275,6 +323,14 @@
         input.classList.remove('placeholder-mode');
         result.textContent = '等待转换...';
         zoneResults.innerHTML = '';
+      });
+
+      zoneResults.addEventListener('click', (event) => {
+        const card = event.target.closest('.zone-item.copyable');
+        if (!card) {
+          return;
+        }
+        copyText(card.dataset.text);
       });
 
       input.addEventListener('focus', () => {
