@@ -155,9 +155,8 @@
       const sourceZoneInputs = document.querySelectorAll('input[name="sourceZone"]');
       const DEFAULT_PLACEHOLDER = '请输入时间';
 
-      function getCurrentTimeForZone(timeZone) {
-        const now = new Date();
-        return now.toLocaleString('zh-CN', {
+      function formatDateTime(date, timeZone) {
+        const formatter = new Intl.DateTimeFormat('zh-CN', {
           timeZone,
           year: 'numeric',
           month: '2-digit',
@@ -167,6 +166,13 @@
           second: '2-digit',
           hour12: false
         });
+        const parts = formatter.formatToParts(date);
+        const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+        return `${map.year}-${map.month}-${map.day} ${map.hour}:${map.minute}:${map.second}`;
+      }
+
+      function getCurrentTimeForZone(timeZone) {
+        return formatDateTime(new Date(), timeZone);
       }
 
       function setDefaultValue() {
@@ -217,18 +223,7 @@
       }
 
       function formatInZone(date, timeZone) {
-        const formatter = new Intl.DateTimeFormat('zh-CN', {
-          timeZone,
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false
-        });
-
-        return formatter.format(date);
+        return formatDateTime(date, timeZone);
       }
 
       function getSelectedSourceZone() {
