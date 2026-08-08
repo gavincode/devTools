@@ -3,49 +3,218 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Base64 编解码</title>
+    <title>Base64 编解码 · DevTools</title>
+    <meta
+      name="description"
+      content="Base64 编码与解码工具,完整支持中文等 Unicode 字符。"
+    />
     <link rel="stylesheet" href="../../styles.css" />
   </head>
   <body>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="../../">
+          <span class="nav-logo">{}</span>
+          <span>DevTools</span>
+        </a>
+        <a class="nav-link" href="../../">← 返回首页</a>
+      </div>
+    </header>
+
     <main class="container">
       <div class="tool-shell">
-        <a class="back-link" href="../../">← 返回首页</a>
-        <h1>Base64 编解码</h1>
-        <p>输入文本进行编码，或输入 Base64 进行解码。</p>
-
-        <textarea id="textInput" placeholder="输入文本或 Base64"></textarea>
-
-        <div class="toolbar">
-          <button id="encodeBtn">编码</button>
-          <button id="decodeBtn">解码</button>
-          <button id="clearBtn">清空</button>
+        <div class="tool-head">
+          <span class="icon-tile tile-base64" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3 4 7l4 4"></path>
+              <path d="M4 7h16"></path>
+              <path d="m16 21 4-4-4-4"></path>
+              <path d="M20 17H4"></path>
+            </svg>
+          </span>
+          <div>
+            <h1>Base64 编解码</h1>
+            <p>文本与 Base64 双向互转。按 <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> 快速编码。</p>
+          </div>
         </div>
 
-        <div id="result" class="result"></div>
+        <div class="field">
+          <label class="field-label" for="textInput">
+            输入文本或 Base64
+            <span class="hint" id="inputMeta"></span>
+          </label>
+          <textarea
+            id="textInput"
+            spellcheck="false"
+            placeholder="输入要编码的文本,或粘贴要解码的 Base64"
+            aria-label="文本或 Base64 输入"
+          ></textarea>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" class="btn primary" id="encodeBtn">编码</button>
+          <button type="button" class="btn ghost" id="decodeBtn">解码</button>
+          <button type="button" class="btn ghost" id="clearBtn">清空</button>
+        </div>
+
+        <div class="result-panel">
+          <div class="result-head">
+            <span class="result-title">输出</span>
+            <span class="pill neutral hidden" id="statusPill">就绪</span>
+            <button type="button" class="copy-btn hidden" id="copyBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+              </svg>
+              复制
+            </button>
+          </div>
+          <div class="result-body empty" id="result">等待输入…</div>
+        </div>
       </div>
     </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>DevTools · 数据仅在浏览器本地处理</span>
+        <span>© 2026</span>
+      </div>
+    </footer>
 
     <script>
       const input = document.getElementById('textInput');
       const result = document.getElementById('result');
+      const statusPill = document.getElementById('statusPill');
+      const copyBtn = document.getElementById('copyBtn');
+      const inputMeta = document.getElementById('inputMeta');
+      let lastOutput = '';
+      let lastMode = '';
 
-      document.getElementById('encodeBtn').addEventListener('click', () => {
-        result.textContent = btoa(unescape(encodeURIComponent(input.value)));
-      });
+      const BASE64_REGEX = /^[A-Za-z0-9+/]*={0,2}$/;
 
-      document.getElementById('decodeBtn').addEventListener('click', () => {
-        try {
-          const decoded = decodeURIComponent(escape(atob(input.value)));
-          result.textContent = decoded;
-        } catch (error) {
-          result.textContent = 'Base64 解码失败：' + error.message;
+      function setPill(text, type) {
+        statusPill.textContent = text;
+        statusPill.className = 'pill' + (type ? ' ' + type : '');
+        statusPill.classList.remove('hidden');
+      }
+
+      function renderSuccess(mode) {
+        lastMode = mode;
+        result.className = 'result-body';
+        result.textContent = lastOutput;
+        copyBtn.classList.remove('hidden');
+        setPill('成功 · ' + lastOutput.length + ' 字符', 'success');
+      }
+
+      function renderError(message) {
+        lastOutput = '';
+        result.className = 'result-body error';
+        result.textContent = '操作失败:' + message;
+        copyBtn.classList.add('hidden');
+        setPill('错误', 'error');
+      }
+
+      function renderIdle() {
+        lastOutput = '';
+        result.className = 'result-body empty';
+        result.textContent = '等待输入…';
+        copyBtn.classList.add('hidden');
+        statusPill.classList.add('hidden');
+      }
+
+      function encode() {
+        const text = input.value;
+        if (!text) {
+          renderIdle();
+          return;
         }
-      });
+        try {
+          lastOutput = btoa(unescape(encodeURIComponent(text)));
+          renderSuccess('encode');
+        } catch (error) {
+          renderError(error.message);
+        }
+      }
+
+      function decode() {
+        const text = input.value.trim();
+        if (!text) {
+          renderIdle();
+          return;
+        }
+        if (!BASE64_REGEX.test(text) || text.length % 4 !== 0) {
+          renderError('输入看起来不是有效的 Base64(请检查长度与字符)');
+          return;
+        }
+        try {
+          lastOutput = decodeURIComponent(escape(atob(text)));
+          renderSuccess('decode');
+        } catch (error) {
+          renderError('无法解码,请确认输入是有效的 Base64');
+        }
+      }
+
+      function updateInputMeta() {
+        const length = input.value.length;
+        inputMeta.textContent = length ? length + ' 字符' : '';
+      }
+
+      async function copyOutput() {
+        if (!lastOutput) return;
+        try {
+          await navigator.clipboard.writeText(lastOutput);
+          copyBtn.innerHTML = '已复制';
+          window.setTimeout(() => {
+            copyBtn.innerHTML =
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>复制';
+          }, 1200);
+        } catch (error) {
+          result.textContent = '复制失败:' + error.message;
+        }
+      }
+
+      document.getElementById('encodeBtn').addEventListener('click', encode);
+      document.getElementById('decodeBtn').addEventListener('click', decode);
+      copyBtn.addEventListener('click', copyOutput);
 
       document.getElementById('clearBtn').addEventListener('click', () => {
         input.value = '';
-        result.textContent = '';
+        updateInputMeta();
+        renderIdle();
+        input.focus();
       });
+
+      input.addEventListener('input', () => {
+        updateInputMeta();
+        if (lastOutput) {
+          setPill('结果已过期,请重新运行', '');
+        }
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          encode();
+        }
+      });
+
+      renderIdle();
+      updateInputMeta();
     </script>
   </body>
 </html>

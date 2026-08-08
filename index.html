@@ -3,71 +3,238 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Developer Tools Hub</title>
+    <title>DevTools · 开发者工具箱</title>
     <meta
       name="description"
-      content="一个适合部署到 GitHub Pages 的开发者工具集静态页面入口"
+      content="精选常用开发者工具:JSON 格式化、Base64 编解码、UUID 生成、时间换算。纯本地运行,数据不出浏览器。"
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
-    <header class="hero">
-      <div class="container">
-        <p class="eyebrow">GitHub Pages · Static Site</p>
-        <h1>Developer Tools Hub</h1>
-        <p class="lead">
-          这是一个为开发者工具集设计的静态页面框架，可持续集成更多工具页面。
-        </p>
-
-        <div class="hero-actions">
-          <a class="button primary" href="#tools">浏览工具</a>
-        </div>
-
-        <section id="tools" class="quick-tools-panel" aria-label="常用工具入口">
-          <div class="quick-tools-header">
-            <h2>常用工具</h2>
-            <p>进入页面后即可立即使用，点击即可跳转。</p>
-          </div>
-
-          <div class="card-grid quick-grid">
-            <a class="card featured-card" href="./tools/json-formatter/">
-              <h3>JSON 格式化</h3>
-              <p>格式化、压缩和校验 JSON 文本。</p>
-            </a>
-
-            <a class="card featured-card" href="./tools/base64/">
-              <h3>Base64 编解码</h3>
-              <p>快速进行文本与 Base64 的互转。</p>
-            </a>
-
-            <a class="card featured-card" href="./tools/uuid/">
-              <h3>UUID 生成</h3>
-              <p>生成标准 UUID，适合测试和标识符场景。</p>
-            </a>
-
-            <a class="card featured-card" href="./tools/time-converter/">
-              <h3>时间工具</h3>
-              <p>兼容主流时间格式，切换 CN / UTC / IST 时区。</p>
-            </a>
-          </div>
-        </section>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="./">
+          <span class="nav-logo">{}</span>
+          <span>DevTools</span>
+        </a>
+        <a class="nav-link" href="#tools">全部工具</a>
       </div>
     </header>
 
-    <main class="container">
+    <section class="hero">
+      <div class="container">
+        <p class="eyebrow">Developer Tools Hub</p>
+        <h1>让开发更高效的<span class="grad"> 开发者工具箱</span></h1>
+        <p class="lead">
+          精选常用开发工具,全部在浏览器本地运行,数据不会上传到任何服务器。搜索或点击即可使用。
+        </p>
 
-      <section class="section">
-        <div class="section-heading">
-          <h2>适合扩展的结构</h2>
-          <p>每个工具保持独立页面，便于后续继续扩展。</p>
+        <div class="search-wrap">
+          <svg
+            class="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.3-4.3"></path>
+          </svg>
+          <input
+            id="toolSearch"
+            type="search"
+            placeholder="搜索工具,如 JSON、Base64、UUID、时间…"
+            autocomplete="off"
+            aria-label="搜索工具"
+          />
         </div>
-        <ul class="list">
-          <li>首页入口：统一展示所有工具</li>
-          <li>工具目录：每个工具一个独立子目录</li>
-          <li>共享样式：统一视觉风格，便于维护</li>
-          <li>GitHub Pages：直接部署到仓库根路径</li>
-        </ul>
+        <p class="result-count" id="resultCount" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <main class="container">
+      <section id="tools" class="tools-section">
+        <div class="section-heading">
+          <h2>全部工具</h2>
+          <p>共 <span id="toolTotal">4</span> 个工具,持续扩充中</p>
+        </div>
+
+        <div class="tool-grid" id="toolGrid">
+          <a
+            class="tool-card"
+            href="./tools/json-formatter/"
+            data-keywords="json 格式化 压缩 校验 美化 文本"
+          >
+            <span class="icon-tile tile-json" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"></path>
+                <path d="M16 21h1a2 2 0 0 0 2-2v-4a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"></path>
+              </svg>
+            </span>
+            <h3>JSON 格式化 <span class="arrow">→</span></h3>
+            <p>格式化、压缩和校验 JSON 文本,支持自动格式化与一键复制。</p>
+            <div class="card-meta">
+              <span>格式化</span>
+              <span>压缩</span>
+              <span>校验</span>
+            </div>
+          </a>
+
+          <a
+            class="tool-card"
+            href="./tools/base64/"
+            data-keywords="base64 编码 解码 加密 文本 转换"
+          >
+            <span class="icon-tile tile-base64" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M8 3 4 7l4 4"></path>
+                <path d="M4 7h16"></path>
+                <path d="m16 21 4-4-4-4"></path>
+                <path d="M20 17H4"></path>
+              </svg>
+            </span>
+            <h3>Base64 编解码 <span class="arrow">→</span></h3>
+            <p>文本与 Base64 双向互转,完整支持中文等 Unicode 字符。</p>
+            <div class="card-meta">
+              <span>编码</span>
+              <span>解码</span>
+              <span>Unicode</span>
+            </div>
+          </a>
+
+          <a
+            class="tool-card"
+            href="./tools/uuid/"
+            data-keywords="uuid guid 生成 随机 id 标识符 v4"
+          >
+            <span class="icon-tile tile-uuid" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+              </svg>
+            </span>
+            <h3>UUID 生成 <span class="arrow">→</span></h3>
+            <p>批量生成标准 UUID v4,点击即可复制,支持大小写切换。</p>
+            <div class="card-meta">
+              <span>批量</span>
+              <span>一键复制</span>
+              <span>v4</span>
+            </div>
+          </a>
+
+          <a
+            class="tool-card"
+            href="./tools/time-converter/"
+            data-keywords="时间 时区 转换 cn utc ist 换算 时间戳"
+          >
+            <span class="icon-tile tile-time" aria-hidden="true">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </span>
+            <h3>时间工具 <span class="arrow">→</span></h3>
+            <p>同一时刻在 CN / UTC / IST 间的换算,附 Unix 时间戳。</p>
+            <div class="card-meta">
+              <span>时区换算</span>
+              <span>时间戳</span>
+              <span>复制</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="empty-state hidden" id="emptyState">
+          没有匹配的工具,试试其他关键词
+        </div>
       </section>
     </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>DevTools · 所有工具均在浏览器本地运行,数据不出本地</span>
+        <span>© 2026</span>
+      </div>
+    </footer>
+
+    <script>
+      const searchInput = document.getElementById('toolSearch');
+      const toolCards = Array.from(document.querySelectorAll('.tool-card'));
+      const emptyState = document.getElementById('emptyState');
+      const resultCount = document.getElementById('resultCount');
+      const toolTotal = document.getElementById('toolTotal');
+
+      toolTotal.textContent = String(toolCards.length);
+
+      function updateResultCount(visibleCount) {
+        if (searchInput.value.trim()) {
+          resultCount.textContent = '找到 ' + visibleCount + ' 个工具';
+        } else {
+          resultCount.textContent = '';
+        }
+      }
+
+      function filterTools() {
+        const keyword = searchInput.value.trim().toLowerCase();
+        let visible = 0;
+
+        toolCards.forEach((card) => {
+          const haystack =
+            (card.dataset.keywords || '') + ' ' + card.textContent.toLowerCase();
+          const match = !keyword || haystack.includes(keyword);
+          card.classList.toggle('hidden', !match);
+          if (match) visible += 1;
+        });
+
+        emptyState.classList.toggle('hidden', visible > 0);
+        updateResultCount(visible);
+      }
+
+      searchInput.addEventListener('input', filterTools);
+
+      document.addEventListener('keydown', (event) => {
+        if (
+          event.key === '/' &&
+          !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)
+        ) {
+          event.preventDefault();
+          searchInput.focus();
+        }
+        if (event.key === 'Escape' && document.activeElement === searchInput) {
+          searchInput.value = '';
+          filterTools();
+          searchInput.blur();
+        }
+      });
+    </script>
   </body>
 </html>

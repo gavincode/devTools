@@ -3,29 +3,96 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>UUID 生成</title>
+    <title>UUID 生成 · DevTools</title>
+    <meta
+      name="description"
+      content="批量生成标准 UUID v4,点击即可复制,支持大小写切换。"
+    />
     <link rel="stylesheet" href="../../styles.css" />
   </head>
   <body>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="../../">
+          <span class="nav-logo">{}</span>
+          <span>DevTools</span>
+        </a>
+        <a class="nav-link" href="../../">← 返回首页</a>
+      </div>
+    </header>
+
     <main class="container">
       <div class="tool-shell">
-        <a class="back-link" href="../../">← 返回首页</a>
-        <h1>UUID 生成</h1>
-        <p>快速生成一个标准 UUID。</p>
-
-        <div class="toolbar">
-          <button id="generateBtn">生成 UUID</button>
-          <button id="clearBtn">清空</button>
+        <div class="tool-head">
+          <span class="icon-tile tile-uuid" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+            </svg>
+          </span>
+          <div>
+            <h1>UUID 生成</h1>
+            <p>批量生成标准 UUID v4,点击任意一条即可复制。</p>
+          </div>
         </div>
 
-        <div id="result" class="result"></div>
+        <div class="option-row">
+          <span class="option-label">数量</span>
+          <div class="segmented" id="countGroup" role="group" aria-label="生成数量">
+            <button type="button" class="seg" data-count="1">1</button>
+            <button type="button" class="seg active" data-count="5">5</button>
+            <button type="button" class="seg" data-count="10">10</button>
+            <button type="button" class="seg" data-count="100">100</button>
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" id="upperToggle" />
+            大写
+          </label>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" class="btn primary" id="generateBtn">生成</button>
+          <button type="button" class="btn ghost" id="copyAllBtn">复制全部</button>
+          <button type="button" class="btn ghost" id="clearBtn">清空</button>
+        </div>
+
+        <div class="result-panel">
+          <div class="result-head">
+            <span class="result-title">生成结果</span>
+            <span class="pill neutral hidden" id="statusPill">就绪</span>
+          </div>
+          <div class="uuid-list" id="uuidList"></div>
+        </div>
       </div>
     </main>
 
+    <div id="toast" class="toast">已复制</div>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>DevTools · 数据仅在浏览器本地处理</span>
+        <span>© 2026</span>
+      </div>
+    </footer>
+
     <script>
-      const result = document.getElementById('result');
+      const uuidList = document.getElementById('uuidList');
+      const statusPill = document.getElementById('statusPill');
+      const toast = document.getElementById('toast');
+      const upperToggle = document.getElementById('upperToggle');
+      let count = 5;
+      let currentUuids = [];
 
       function generateUuid() {
+        if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+          return window.crypto.randomUUID();
+        }
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
           const r = Math.random() * 16 | 0;
           const v = c === 'x' ? r : (r & 0x3 | 0x8);
@@ -33,15 +100,95 @@
         });
       }
 
-      document.getElementById('generateBtn').addEventListener('click', () => {
-        result.textContent = generateUuid();
+      function applyCase(value) {
+        return upperToggle.checked ? value.toUpperCase() : value;
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        window.clearTimeout(showToast.timeoutId);
+        showToast.timeoutId = window.setTimeout(() => {
+          toast.classList.remove('show');
+        }, 1200);
+      }
+
+      function setPill(text, type) {
+        statusPill.textContent = text;
+        statusPill.className = 'pill' + (type ? ' ' + type : '');
+        statusPill.classList.remove('hidden');
+      }
+
+      function render() {
+        uuidList.innerHTML = currentUuids
+          .map((uuid, index) => {
+            return (
+              '<div class="uuid-item" data-text="' + uuid + '" title="点击复制">' +
+              '<span class="uuid-index">' + (index + 1) + '</span>' +
+              '<span>' + uuid + '</span>' +
+              '<span class="uuid-copy" aria-hidden="true">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>' +
+              '</span>' +
+              '</div>'
+            );
+          })
+          .join('');
+        setPill(
+          currentUuids.length
+            ? currentUuids.length + ' 条 · ' + (upperToggle.checked ? '大写' : '小写')
+            : '就绪',
+          currentUuids.length ? 'success' : ''
+        );
+      }
+
+      function generate() {
+        currentUuids = Array.from({ length: count }, () => applyCase(generateUuid()));
+        render();
+      }
+
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showToast('已复制');
+        } catch (error) {
+          showToast('复制失败');
+        }
+      }
+
+      document.getElementById('countGroup').addEventListener('click', (event) => {
+        const seg = event.target.closest('.seg');
+        if (!seg) return;
+        count = Number(seg.dataset.count);
+        document.querySelectorAll('#countGroup .seg').forEach((item) => {
+          item.classList.toggle('active', item === seg);
+        });
+        generate();
+      });
+
+      uuidList.addEventListener('click', (event) => {
+        const item = event.target.closest('.uuid-item');
+        if (!item) return;
+        copyText(item.dataset.text);
+      });
+
+      upperToggle.addEventListener('change', () => {
+        currentUuids = currentUuids.map((uuid) => applyCase(uuid));
+        render();
+      });
+
+      document.getElementById('generateBtn').addEventListener('click', generate);
+
+      document.getElementById('copyAllBtn').addEventListener('click', () => {
+        if (!currentUuids.length) return;
+        copyText(currentUuids.join('\n'));
       });
 
       document.getElementById('clearBtn').addEventListener('click', () => {
-        result.textContent = '';
+        currentUuids = [];
+        render();
       });
 
-      result.textContent = generateUuid();
+      generate();
     </script>
   </body>
 </html>

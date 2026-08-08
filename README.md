@@ -15,8 +15,9 @@
 3. 选择 `main` 分支的根目录作为发布源。
 4. 访问 `https://<username>.github.io/<repo>/`。
 
-## 当前已包含的示例工具
+## 当前已包含的工具
 
-- JSON 格式化
-- Base64 编解码
-- UUID 生成
+- JSON 格式化(格式化 / 压缩 / 校验)
+- Base64 编解码(支持 Unicode)
+- UUID 生成(批量生成 / 一键复制)
+- 时间工具(CN / UTC / IST 换算与 Unix 时间戳)

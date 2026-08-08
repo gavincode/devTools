@@ -3,188 +3,129 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>时间工具</title>
+    <title>时间工具 · DevTools</title>
+    <meta
+      name="description"
+      content="同一时刻在 CN / UTC / IST 时区间的换算工具,附 Unix 时间戳与一键复制。"
+    />
     <link rel="stylesheet" href="../../styles.css" />
     <style>
-      .grid {
-        display: grid;
-        gap: 1rem;
-        grid-template-columns: 1fr;
+      .result-body {
+        white-space: normal;
       }
 
-      .result-card {
-        padding: 1rem;
-        border-radius: 14px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid var(--border);
+      .result-body #result {
+        white-space: pre-wrap;
       }
 
-      .muted {
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
-
-      input {
-        width: 100%;
-        padding: 0.8rem;
-        border-radius: 12px;
-        border: 1px solid var(--border);
-        background: var(--surface-2);
-        color: var(--text);
+      .seg input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
       }
 
       input.placeholder-mode {
-        color: #94a3b8;
-      }
-
-      .zone-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 0.75rem;
-        margin-top: 1rem;
-      }
-
-      .zone-item {
-        padding: 0.9rem 1rem;
-        border-radius: 12px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid var(--border);
-        transition: all 0.2s ease;
-      }
-
-      .zone-item strong {
-        display: block;
-        margin-bottom: 0.25rem;
-      }
-
-      .zone-item.highlight {
-        background: linear-gradient(90deg, rgba(56, 189, 248, 0.22), rgba(129, 140, 248, 0.2));
-        border-color: var(--accent);
-        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
-      }
-
-      .zone-item.dim {
-        opacity: 0.55;
-        background: rgba(255, 255, 255, 0.02);
-        border-color: rgba(255, 255, 255, 0.08);
-      }
-
-      .zone-item.copyable {
-        cursor: pointer;
-      }
-
-      .zone-item.copyable:hover {
-        transform: translateY(-1px);
-      }
-
-      .copy-tip {
-        position: fixed;
-        left: 50%;
-        bottom: 1.5rem;
-        transform: translateX(-50%);
-        padding: 0.7rem 1rem;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.95);
-        color: white;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-        font-size: 0.95rem;
-        z-index: 1000;
-        pointer-events: none;
-        opacity: 0;
-        transition: opacity 0.2s ease;
-      }
-
-      .copy-tip.show {
-        opacity: 1;
-      }
-
-      .radio-group {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.75rem;
-        margin-top: 0.5rem;
-      }
-
-      .radio-option {
-        display: flex;
-        align-items: center;
-        gap: 0.4rem;
-        padding: 0.7rem 0.9rem;
-        border-radius: 999px;
-        border: 1px solid var(--border);
-        background: rgba(255,255,255,0.04);
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .radio-option:hover {
-        border-color: var(--accent);
-        transform: translateY(-1px);
-      }
-
-      .radio-option input {
-        width: auto;
-        margin: 0;
-        accent-color: var(--accent);
-      }
-
-      .radio-option.selected {
-        background: linear-gradient(90deg, rgba(56, 189, 248, 0.25), rgba(129, 140, 248, 0.22));
-        border-color: var(--accent);
-        box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.2);
+        color: var(--muted);
       }
     </style>
   </head>
   <body>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="../../">
+          <span class="nav-logo">{}</span>
+          <span>DevTools</span>
+        </a>
+        <a class="nav-link" href="../../">← 返回首页</a>
+      </div>
+    </header>
+
     <main class="container">
       <div class="tool-shell">
-        <a class="back-link" href="../../">← 返回首页</a>
-        <h1>时间工具</h1>
-        <p>输入一个时间/时区，查看不同时区对应的时间。</p>
-
-        <div class="grid">
+        <div class="tool-head">
+          <span class="icon-tile tile-time" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </span>
           <div>
-            <label class="muted" for="timeInput">原时间</label>
-            <input id="timeInput" type="text" />
+            <h1>时间工具</h1>
+            <p>输入一个时间,查看它在 CN / UTC / IST 对应的时刻,点击结果即可复制。</p>
           </div>
-          <div>
-            <label class="muted">原时区</label>
-            <div class="radio-group" id="zoneRadios">
-              <label class="radio-option selected">
-                <input type="radio" name="sourceZone" value="Asia/Shanghai" checked />
-                CN
-              </label>
-              <label class="radio-option">
-                <input type="radio" name="sourceZone" value="UTC" />
-                UTC
-              </label>
-              <label class="radio-option">
-                <input type="radio" name="sourceZone" value="Asia/Kolkata" />
-                IST
-              </label>
-            </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="timeInput">原时间</label>
+          <input id="timeInput" type="text" autocomplete="off" />
+        </div>
+
+        <div class="option-row">
+          <span class="option-label">原时区</span>
+          <div class="segmented" id="zoneRadios" role="radiogroup" aria-label="原时区">
+            <label class="seg active" role="radio" aria-checked="true">
+              <input type="radio" name="sourceZone" value="Asia/Shanghai" checked />
+              CN
+            </label>
+            <label class="seg" role="radio" aria-checked="false">
+              <input type="radio" name="sourceZone" value="UTC" />
+              UTC
+            </label>
+            <label class="seg" role="radio" aria-checked="false">
+              <input type="radio" name="sourceZone" value="Asia/Kolkata" />
+              IST
+            </label>
           </div>
         </div>
 
         <div class="toolbar">
-          <button id="clearBtn">清空</button>
+          <button type="button" class="btn primary" id="nowBtn">使用当前时间</button>
+          <button type="button" class="btn ghost" id="clearBtn">清空</button>
         </div>
 
-        <div class="result-card">
-          <div id="result" class="result">等待转换...</div>
-          <div id="zoneResults" class="zone-list"></div>
+        <div class="result-panel">
+          <div class="result-head">
+            <span class="result-title">目标时间</span>
+            <span class="pill neutral hidden" id="statusPill">就绪</span>
+          </div>
+          <div class="result-body">
+            <div id="result">等待输入…</div>
+            <div id="zoneResults" class="zone-list hidden"></div>
+            <div class="time-meta hidden" id="timeMeta">
+              <button type="button" class="copy-btn" id="copyTsBtn">复制 Unix 时间戳</button>
+              <span id="tsValue"></span>
+            </div>
+          </div>
         </div>
       </div>
-      <div id="copyTip" class="copy-tip">已复制</div>
     </main>
+
+    <div id="toast" class="toast">已复制</div>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>DevTools · 数据仅在浏览器本地处理</span>
+        <span>© 2026</span>
+      </div>
+    </footer>
 
     <script>
       const input = document.getElementById('timeInput');
       const result = document.getElementById('result');
       const zoneResults = document.getElementById('zoneResults');
-      const copyTip = document.getElementById('copyTip');
+      const timeMeta = document.getElementById('timeMeta');
+      const tsValue = document.getElementById('tsValue');
+      const statusPill = document.getElementById('statusPill');
+      const toast = document.getElementById('toast');
       const sourceZoneInputs = document.querySelectorAll('input[name="sourceZone"]');
-      const DEFAULT_PLACEHOLDER = '请输入时间';
+      const DEFAULT_PLACEHOLDER = '请输入时间,如 2026-08-08 12:00:00';
 
       function formatDateTime(date, timeZone) {
         const formatter = new Intl.DateTimeFormat('zh-CN', {
@@ -204,14 +145,6 @@
 
       function getCurrentTimeForZone(timeZone) {
         return formatDateTime(new Date(), timeZone);
-      }
-
-      function setDefaultValue() {
-        if (input.value.trim()) {
-          return;
-        }
-        input.value = getCurrentTimeForZone('Asia/Shanghai');
-        input.classList.add('placeholder-mode');
       }
 
       function getZoneOffsetMinutes(timeZone) {
@@ -253,35 +186,39 @@
         throw new Error('暂时无法识别该时间格式');
       }
 
-      function formatInZone(date, timeZone) {
-        return formatDateTime(date, timeZone);
-      }
-
       function getSelectedSourceZone() {
         return document.querySelector('input[name="sourceZone"]:checked').value;
       }
 
       function updateRadioSelection() {
         sourceZoneInputs.forEach((radio) => {
-          const label = radio.closest('.radio-option');
-          label.classList.toggle('selected', radio.checked);
+          const label = radio.closest('.seg');
+          label.classList.toggle('active', radio.checked);
+          label.setAttribute('aria-checked', String(radio.checked));
         });
       }
 
-      function showCopyTip() {
-        copyTip.classList.add('show');
-        window.clearTimeout(showCopyTip.timeoutId);
-        showCopyTip.timeoutId = window.setTimeout(() => {
-          copyTip.classList.remove('show');
+      function setPill(text, type) {
+        statusPill.textContent = text;
+        statusPill.className = 'pill' + (type ? ' ' + type : '');
+        statusPill.classList.remove('hidden');
+      }
+
+      function showToast(message) {
+        toast.textContent = message;
+        toast.classList.add('show');
+        window.clearTimeout(showToast.timeoutId);
+        showToast.timeoutId = window.setTimeout(() => {
+          toast.classList.remove('show');
         }, 1200);
       }
 
       async function copyText(text) {
         try {
           await navigator.clipboard.writeText(text);
-          showCopyTip();
+          showToast('已复制');
         } catch (error) {
-          console.error('复制失败', error);
+          showToast('复制失败');
         }
       }
 
@@ -293,18 +230,35 @@
           { label: 'IST', value: 'Asia/Kolkata' }
         ];
 
-        zoneResults.innerHTML = zones.map((zone) => {
+        const cards = zones.map((zone) => {
           const isCurrent = zone.value === sourceZone;
-          const className = isCurrent ? 'zone-item dim copyable' : 'zone-item highlight copyable';
-          return `
-            <div class="${className}" data-text="${formatInZone(date, zone.value)}">
-              <strong>${zone.label}</strong>
-              ${formatInZone(date, zone.value)}
-            </div>
-          `;
-        }).join('');
+          const card = document.createElement('div');
+          card.className =
+            'zone-item copyable ' + (isCurrent ? 'source' : 'highlight');
+          card.dataset.text = formatInZone(date, zone.value);
+          card.title = '点击复制';
 
-        result.innerHTML = `<strong>目标时间</strong>`;
+          const label = document.createElement('strong');
+          label.textContent = zone.label + (isCurrent ? ' · 原时区' : '');
+          const time = document.createElement('span');
+          time.className = 'zone-time';
+          time.textContent = formatInZone(date, zone.value);
+
+          card.append(label, time);
+          return card;
+        });
+        zoneResults.replaceChildren(...cards);
+        zoneResults.classList.remove('hidden');
+        result.classList.add('hidden');
+
+        const timestamp = Math.floor(date.getTime() / 1000);
+        tsValue.textContent = String(timestamp);
+        timeMeta.classList.remove('hidden');
+        setPill('转换成功', 'success');
+      }
+
+      function formatInZone(date, timeZone) {
+        return formatDateTime(date, timeZone);
       }
 
       function convertTime() {
@@ -313,16 +267,42 @@
           const date = parseTime(input.value, sourceZone);
           renderZones(date);
         } catch (error) {
-          result.textContent = '错误：' + error.message;
-          zoneResults.innerHTML = '';
+          result.textContent = '错误:' + error.message;
+          result.classList.remove('hidden');
+          zoneResults.replaceChildren();
+          zoneResults.classList.add('hidden');
+          timeMeta.classList.add('hidden');
+          setPill('错误', 'error');
         }
       }
+
+      function setDefaultValue() {
+        if (input.value.trim()) {
+          return;
+        }
+        input.value = getCurrentTimeForZone('Asia/Shanghai');
+        input.classList.add('placeholder-mode');
+      }
+
+      function resetToNow() {
+        input.value = getCurrentTimeForZone('Asia/Shanghai');
+        input.classList.remove('placeholder-mode');
+        convertTime();
+      }
+
+      document.getElementById('nowBtn').addEventListener('click', resetToNow);
 
       document.getElementById('clearBtn').addEventListener('click', () => {
         input.value = '';
         input.classList.remove('placeholder-mode');
-        result.textContent = '等待转换...';
-        zoneResults.innerHTML = '';
+        input.placeholder = DEFAULT_PLACEHOLDER;
+        result.textContent = '等待输入…';
+        result.classList.remove('hidden');
+        zoneResults.replaceChildren();
+        zoneResults.classList.add('hidden');
+        timeMeta.classList.add('hidden');
+        statusPill.classList.add('hidden');
+        input.focus();
       });
 
       zoneResults.addEventListener('click', (event) => {
@@ -333,10 +313,14 @@
         copyText(card.dataset.text);
       });
 
+      document.getElementById('copyTsBtn').addEventListener('click', () => {
+        copyText(tsValue.textContent);
+      });
+
       input.addEventListener('focus', () => {
+        input.placeholder = DEFAULT_PLACEHOLDER;
         if (input.value.trim() === '') {
           input.classList.add('placeholder-mode');
-          input.value = '';
         } else {
           input.classList.remove('placeholder-mode');
           input.select();
@@ -358,9 +342,6 @@
         convertTime();
       });
 
-      input.addEventListener('paste', () => {
-        input.classList.remove('placeholder-mode');
-      });
       sourceZoneInputs.forEach((radio) => {
         radio.addEventListener('change', () => {
           updateRadioSelection();
@@ -368,6 +349,7 @@
           convertTime();
         });
       });
+
       updateRadioSelection();
       setDefaultValue();
       convertTime();

@@ -3,54 +3,227 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JSON 格式化</title>
+    <title>JSON 格式化 · DevTools</title>
+    <meta
+      name="description"
+      content="JSON 格式化、压缩与校验工具,支持自动格式化与一键复制。"
+    />
     <link rel="stylesheet" href="../../styles.css" />
   </head>
   <body>
+    <header class="nav">
+      <div class="container nav-inner">
+        <a class="nav-brand" href="../../">
+          <span class="nav-logo">{}</span>
+          <span>DevTools</span>
+        </a>
+        <a class="nav-link" href="../../">← 返回首页</a>
+      </div>
+    </header>
+
     <main class="container">
       <div class="tool-shell">
-        <a class="back-link" href="../../">← 返回首页</a>
-        <h1>JSON 格式化</h1>
-        <p>粘贴 JSON 文本并格式化或压缩。</p>
-
-        <textarea id="jsonInput" placeholder='{"name":"demo","items":[1,2,3]}'></textarea>
-
-        <div class="toolbar">
-          <button id="formatBtn">格式化</button>
-          <button id="minifyBtn">压缩</button>
-          <button id="clearBtn">清空</button>
+        <div class="tool-head">
+          <span class="icon-tile tile-json" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"></path>
+              <path d="M16 21h1a2 2 0 0 0 2-2v-4a2 2 0 0 1 2-2 2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"></path>
+            </svg>
+          </span>
+          <div>
+            <h1>JSON 格式化</h1>
+            <p>格式化、压缩和校验 JSON。按 <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span> 快速格式化。</p>
+          </div>
         </div>
 
-        <div id="result" class="result"></div>
+        <div class="field">
+          <label class="field-label" for="jsonInput">
+            输入 JSON
+            <span class="hint" id="inputMeta"></span>
+          </label>
+          <textarea
+            id="jsonInput"
+            spellcheck="false"
+            placeholder='{"name":"demo","items":[1,2,3]}'
+            aria-label="JSON 输入"
+          ></textarea>
+        </div>
+
+        <div class="option-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="autoFormat" />
+            输入时自动格式化
+          </label>
+          <button type="button" class="btn ghost" id="sampleBtn">填入示例</button>
+        </div>
+
+        <div class="toolbar">
+          <button type="button" class="btn primary" id="formatBtn">格式化</button>
+          <button type="button" class="btn ghost" id="minifyBtn">压缩</button>
+          <button type="button" class="btn ghost" id="clearBtn">清空</button>
+        </div>
+
+        <div class="result-panel">
+          <div class="result-head">
+            <span class="result-title">输出</span>
+            <span class="pill neutral hidden" id="statusPill">就绪</span>
+            <button type="button" class="copy-btn hidden" id="copyBtn">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+              </svg>
+              复制
+            </button>
+          </div>
+          <div class="result-body empty" id="result">等待输入…</div>
+        </div>
       </div>
     </main>
+
+    <footer class="footer">
+      <div class="container footer-inner">
+        <span>DevTools · 数据仅在浏览器本地处理</span>
+        <span>© 2026</span>
+      </div>
+    </footer>
 
     <script>
       const input = document.getElementById('jsonInput');
       const result = document.getElementById('result');
+      const statusPill = document.getElementById('statusPill');
+      const copyBtn = document.getElementById('copyBtn');
+      const inputMeta = document.getElementById('inputMeta');
+      const autoFormat = document.getElementById('autoFormat');
+      let lastOutput = '';
+      let debounceTimer = null;
 
-      document.getElementById('formatBtn').addEventListener('click', () => {
-        try {
-          const parsed = JSON.parse(input.value);
-          result.textContent = JSON.stringify(parsed, null, 2);
-        } catch (error) {
-          result.textContent = 'JSON 解析失败：' + error.message;
-        }
-      });
+      const SAMPLE = {
+        name: 'demo',
+        version: '1.0.0',
+        enabled: true,
+        items: [1, 2, 3],
+        nested: { note: '试试格式化、压缩与校验' }
+      };
 
-      document.getElementById('minifyBtn').addEventListener('click', () => {
-        try {
-          const parsed = JSON.parse(input.value);
-          result.textContent = JSON.stringify(parsed);
-        } catch (error) {
-          result.textContent = 'JSON 解析失败：' + error.message;
+      function setPill(text, type) {
+        statusPill.textContent = text;
+        statusPill.className = 'pill' + (type ? ' ' + type : '');
+        statusPill.classList.remove('hidden');
+      }
+
+      function renderSuccess() {
+        result.className = 'result-body';
+        result.textContent = lastOutput;
+        copyBtn.classList.remove('hidden');
+        const lines = lastOutput.split('\n').length;
+        setPill('成功 · ' + lines + ' 行 · ' + lastOutput.length + ' 字符', 'success');
+      }
+
+      function renderError(message) {
+        result.className = 'result-body error';
+        result.textContent = 'JSON 解析失败:' + message;
+        copyBtn.classList.add('hidden');
+        setPill('错误', 'error');
+      }
+
+      function renderIdle() {
+        result.className = 'result-body empty';
+        result.textContent = '等待输入…';
+        copyBtn.classList.add('hidden');
+        statusPill.classList.add('hidden');
+      }
+
+      function format(space) {
+        const text = input.value.trim();
+        if (!text) {
+          lastOutput = '';
+          renderIdle();
+          return;
         }
+        try {
+          const parsed = JSON.parse(text);
+          lastOutput = JSON.stringify(parsed, null, space);
+          renderSuccess();
+        } catch (error) {
+          lastOutput = '';
+          renderError(error.message);
+        }
+      }
+
+      function updateInputMeta() {
+        const length = input.value.length;
+        inputMeta.textContent = length ? length + ' 字符' : '';
+      }
+
+      async function copyOutput() {
+        if (!lastOutput) return;
+        try {
+          await navigator.clipboard.writeText(lastOutput);
+          copyBtn.innerHTML = '已复制';
+          window.setTimeout(() => {
+            copyBtn.innerHTML =
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path></svg>复制';
+          }, 1200);
+        } catch (error) {
+          result.textContent = '复制失败:' + error.message;
+        }
+      }
+
+      document.getElementById('formatBtn').addEventListener('click', () => format(2));
+      document.getElementById('minifyBtn').addEventListener('click', () => format(0));
+
+      document.getElementById('sampleBtn').addEventListener('click', () => {
+        input.value = JSON.stringify(SAMPLE, null, 2);
+        updateInputMeta();
+        format(2);
+        input.focus();
       });
 
       document.getElementById('clearBtn').addEventListener('click', () => {
         input.value = '';
-        result.textContent = '';
+        lastOutput = '';
+        updateInputMeta();
+        renderIdle();
+        input.focus();
       });
+
+      copyBtn.addEventListener('click', copyOutput);
+
+      input.addEventListener('input', () => {
+        updateInputMeta();
+        if (autoFormat.checked) {
+          window.clearTimeout(debounceTimer);
+          debounceTimer = window.setTimeout(() => format(2), 400);
+        } else if (lastOutput) {
+          // 输入已变化但尚未重新运行,标记结果过期,避免复制旧输出
+          setPill('结果已过期,请重新运行', '');
+        }
+      });
+
+      input.addEventListener('keydown', (event) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+          event.preventDefault();
+          format(2);
+        }
+      });
+
+      renderIdle();
+      updateInputMeta();
     </script>
   </body>
 </html>
